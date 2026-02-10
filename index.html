@@ -3,29 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <title>Il mio Libro di Armonia</title>
- <script src="https://unpkg.com/opensheetmusicdisplay@1.6.1/dist/opensheetmusicdisplay.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/opensheetmusicdisplay/1.6.1/opensheetmusicdisplay.min.js"></script>
 </head>
 <body>
 
     <h1>Esempi di Armonia</h1>
     <div id="spartito"></div>
 
-    <script>
-        // Questa funzione aspetta che la libreria sia pronta
-        window.onload = function() {
-            if (typeof opensheetmusicdisplay !== 'undefined') {
-                var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("spartito");
-                
-                // SOSTITUISCI "tuo-file.xml" con il nome esatto del tuo file
-                osmd.load("prova.xml").then(function() {
-                    osmd.render();
-                }).catch(function(err) {
-                    console.error("Errore nel caricamento dell'XML:", err);
-                });
-            } else {
-                console.error("Libreria OSMD non caricata correttamente!");
-            }
-        };
-    </script>
+   <script>
+    window.onload = function() {
+        // Proviamo a inizializzare OSMD in modo più diretto
+        try {
+            var container = document.getElementById("spartito-container");
+            var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(container);
+            
+            // Carica il tuo file (controlla bene che il nome sia identico a quello su GitHub!)
+            osmd.load("prova.xml").then(function() {
+                osmd.render();
+            }).catch(function(err) {
+                console.error("Errore nel caricamento del file XML:", err);
+            });
+        } catch (e) {
+            console.error("Errore critico:", e);
+            alert("C'è un problema con la libreria. Controlla la console (F12)");
+        }
+    };
+</script>
 </body>
 </html>
