@@ -2,32 +2,82 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Il mio Libro di Armonia</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/opensheetmusicdisplay/1.6.1/opensheetmusicdisplay.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esempi Armonia Funzionale</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.6.1/dist/opensheetmusicdisplay.min.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        #controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background-color: #007bff; color: white; font-weight: bold; transition: 0.3s; }
+        button:hover { background-color: #0056b3; }
+        button.transpose { background-color: #28a745; }
+        button.transpose:hover { background-color: #218838; }
+        #score-container { width: 100%; border: 1px solid #ddd; border-radius: 4px; min-height: 300px; }
+        .loading { text-align: center; color: #666; font-style: italic; }
+    </style>
 </head>
 <body>
 
+<div class="container">
     <h1>Esempi di Armonia</h1>
-    <div id="spartito"></div>
+    
+    <div id="controls">
+        <button class="transpose" onclick="changeTranspose(1)">Trasporta +1 Semitono</button>
+        <button class="transpose" onclick="changeTranspose(-1)">Trasporta -1 Semitono</button>
+        <button onclick="resetTranspose()">Reset Tonalità</button>
+    </div>
 
-   <script>
-    window.onload = function() {
-        // Proviamo a inizializzare OSMD in modo più diretto
-        try {
-            var container = document.getElementById("spartito-container");
-            var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(container);
-            
-            // Carica il tuo file (controlla bene che il nome sia identico a quello su GitHub!)
-            osmd.load("prova.xml").then(function() {
-                osmd.render();
-            }).catch(function(err) {
-                console.error("Errore nel caricamento del file XML:", err);
+    <div id="loading-msg" class="loading">Caricamento spartito in corso...</div>
+    <div id="score-container"></div>
+</div>
+
+<script>
+    let osmd;
+    let currentTranspose = 0;
+    
+    // NOME DEL TUO FILE (Assicurati che sia identico a quello su GitHub!)
+    const xmlFile = "prova.xml"; 
+
+    function initOSMD() {
+        if (typeof opensheetmusicdisplay !== 'undefined') {
+            osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("score-container", {
+                autoResize: true,
+                drawTitle: true
             });
-        } catch (e) {
-            console.error("Errore critico:", e);
-            alert("C'è un problema con la libreria. Controlla la console (F12)");
+
+            osmd.load(xmlFile).then(() => {
+                document.getElementById('loading-msg').style.display = 'none';
+                osmd.render();
+            }).catch(err => {
+                document.getElementById('loading-msg').innerHTML = "Errore: file '" + xmlFile + "' non trovato.";
+                console.error(err);
+            });
+        } else {
+            document.getElementById('loading-msg').innerHTML = "Errore critico: Libreria musicale non disponibile.";
         }
-    };
+    }
+
+    function changeTranspose(semitones) {
+        currentTranspose += semitones;
+        osmd.Sheet.Transpose = currentTranspose;
+        osmd.updateGraphic();
+        osmd.render();
+    }
+
+    function resetTranspose() {
+        currentTranspose = 0;
+        osmd.Sheet.Transpose = 0;
+        osmd.updateGraphic();
+        osmd.render();
+    }
+
+    // Facciamo partire il tutto all'avvio
+    window.onload = initOSMD;
 </script>
+
 </body>
 </html>
