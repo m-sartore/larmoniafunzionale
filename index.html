@@ -4,37 +4,28 @@
     <meta charset="UTF-8">
     <title>Il mio Libro di Armonia</title>
     <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.6.1/dist/opensheetmusicdisplay.min.js"></script>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        #controlli { margin-bottom: 20px; background: #f0f0f0; padding: 10px; border-radius: 8px; }
-        #spartito { width: 100%; }
-    </style>
 </head>
 <body>
 
     <h1>Esempi di Armonia</h1>
-    
-    <div id="controlli">
-        <p>Esempio: <b>Cadenza Perfetta</b></p>
-        <button onclick="trasporta(1)">Trasporta +1 Semitono</button>
-        <button onclick="trasporta(-1)">Trasporta -1 Semitono</button>
-    </div>
-
     <div id="spartito"></div>
 
     <script>
-        var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("spartito");
-        
-        // ATTENZIONE: Cambia "esempio-1.xml" con il nome esatto del tuo file caricato
-        osmd.load("prova.xml").then(function() {
-            osmd.render();
-        });
-
-        function trasporta(semitoni) {
-            osmd.Sheet.Transpose = semitoni;
-            osmd.updateGraphic();
-            osmd.render();
-        }
+        // Questa funzione aspetta che la libreria sia pronta
+        window.onload = function() {
+            if (typeof opensheetmusicdisplay !== 'undefined') {
+                var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("spartito");
+                
+                // SOSTITUISCI "tuo-file.xml" con il nome esatto del tuo file
+                osmd.load("prova.xml").then(function() {
+                    osmd.render();
+                }).catch(function(err) {
+                    console.error("Errore nel caricamento dell'XML:", err);
+                });
+            } else {
+                console.error("Libreria OSMD non caricata correttamente!");
+            }
+        };
     </script>
 </body>
 </html>
