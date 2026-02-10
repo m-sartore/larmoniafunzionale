@@ -2,41 +2,72 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Esempi Armonia</title>
-    <script src="opensheetmusicdisplay.min.js"></script>
+    
+    <script src="./opensheetmusicdisplay.min.js"></script>
+    
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f9f9f9; }
+        #score-container { background: white; border: 1px solid #ddd; border-radius: 8px; min-height: 400px; margin-top: 20px; }
+        .controls { margin: 20px 0; }
+        button { padding: 10px 15px; font-size: 16px; cursor: pointer; border-radius: 5px; border: 1px solid #007bff; background: white; color: #007bff; }
+        button:hover { background: #007bff; color: white; }
+    </style>
 </head>
 <body>
-    <h1>Esempi di Armonia</h1>
-    <div id="controls">
+
+    <h1>Esempi di Armonia Funzionale</h1>
+    
+    <div class="controls">
         <button onclick="changeTranspose(1)">Trasporta +1</button>
         <button onclick="changeTranspose(-1)">Trasporta -1</button>
+        <button onclick="location.reload()">Ricarica</button>
     </div>
+
+    <div id="loading">Caricamento in corso...</div>
     <div id="score-container"></div>
 
     <script>
-        window.onload = function() {
-            // Usiamo un piccolo ritardo per essere sicuri che il file sia letto
-            setTimeout(function() {
-                if (typeof opensheetmusicdisplay !== 'undefined') {
-                    var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("score-container");
-                    // Cambia "esempio.xml" con il tuo file reale
-                    osmd.load("prova.xml").then(function() {
-                        osmd.render();
-                        window.osmd = osmd; // Lo rendiamo globale per il trasporto
-                    });
-                } else {
-                    alert("Il file opensheetmusicdisplay.min.js non è stato trovato nella cartella!");
-                }
-            }, 500);
-        };
+        var osmd;
 
-        function changeTranspose(semitones) {
-            if(window.osmd) {
-                window.osmd.Sheet.Transpose += semitones;
-                window.osmd.updateGraphic();
-                window.osmd.render();
+        // Funzione per inizializzare OSMD
+        function startApp() {
+            // Controlliamo se la libreria è "viva"
+            if (typeof opensheetmusicdisplay !== 'undefined') {
+                document.getElementById('loading').style.display = 'none';
+                
+                osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("score-container", {
+                    autoResize: true,
+                    drawTitle: true
+                });
+
+                // SOSTITUISCI "esempio.xml" con il nome esatto del tuo file (occhio alle maiuscole!)
+                osmd.load("esempio.xml").then(function() {
+                    osmd.render();
+                }).catch(function(e) {
+                    console.error("Errore caricamento XML:", e);
+                    document.getElementById('loading').innerHTML = "Errore: File XML non trovato.";
+                });
+            } else {
+                // Se non è ancora pronta, riprova tra mezzo secondo
+                console.log("Libreria non ancora pronta, riprovo...");
+                setTimeout(startApp, 500);
             }
         }
+
+        function changeTranspose(semitones) {
+            if (osmd && osmd.Sheet) {
+                osmd.Sheet.Transpose += semitones;
+                osmd.updateGraphic();
+                osmd.render();
+            }
+        }
+
+        // Avvio
+        window.onload = startApp;
     </script>
+</body>
+</html>
 </body>
 </html>
