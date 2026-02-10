@@ -2,82 +2,41 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esempi Armonia Funzionale</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.6.1/dist/opensheetmusicdisplay.min.js"></script>
-    
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { color: #333; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        #controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background-color: #007bff; color: white; font-weight: bold; transition: 0.3s; }
-        button:hover { background-color: #0056b3; }
-        button.transpose { background-color: #28a745; }
-        button.transpose:hover { background-color: #218838; }
-        #score-container { width: 100%; border: 1px solid #ddd; border-radius: 4px; min-height: 300px; }
-        .loading { text-align: center; color: #666; font-style: italic; }
-    </style>
+    <title>Esempi Armonia</title>
+    <script src="opensheetmusicdisplay.min.js"></script>
 </head>
 <body>
-
-<div class="container">
     <h1>Esempi di Armonia</h1>
-    
     <div id="controls">
-        <button class="transpose" onclick="changeTranspose(1)">Trasporta +1 Semitono</button>
-        <button class="transpose" onclick="changeTranspose(-1)">Trasporta -1 Semitono</button>
-        <button onclick="resetTranspose()">Reset Tonalità</button>
+        <button onclick="changeTranspose(1)">Trasporta +1</button>
+        <button onclick="changeTranspose(-1)">Trasporta -1</button>
     </div>
-
-    <div id="loading-msg" class="loading">Caricamento spartito in corso...</div>
     <div id="score-container"></div>
-</div>
 
-<script>
-    let osmd;
-    let currentTranspose = 0;
-    
-    // NOME DEL TUO FILE (Assicurati che sia identico a quello su GitHub!)
-    const xmlFile = "prova.xml"; 
+    <script>
+        window.onload = function() {
+            // Usiamo un piccolo ritardo per essere sicuri che il file sia letto
+            setTimeout(function() {
+                if (typeof opensheetmusicdisplay !== 'undefined') {
+                    var osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("score-container");
+                    // Cambia "esempio.xml" con il tuo file reale
+                    osmd.load("prova.xml").then(function() {
+                        osmd.render();
+                        window.osmd = osmd; // Lo rendiamo globale per il trasporto
+                    });
+                } else {
+                    alert("Il file opensheetmusicdisplay.min.js non è stato trovato nella cartella!");
+                }
+            }, 500);
+        };
 
-    function initOSMD() {
-        if (typeof opensheetmusicdisplay !== 'undefined') {
-            osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("score-container", {
-                autoResize: true,
-                drawTitle: true
-            });
-
-            osmd.load(xmlFile).then(() => {
-                document.getElementById('loading-msg').style.display = 'none';
-                osmd.render();
-            }).catch(err => {
-                document.getElementById('loading-msg').innerHTML = "Errore: file '" + xmlFile + "' non trovato.";
-                console.error(err);
-            });
-        } else {
-            document.getElementById('loading-msg').innerHTML = "Errore critico: Libreria musicale non disponibile.";
+        function changeTranspose(semitones) {
+            if(window.osmd) {
+                window.osmd.Sheet.Transpose += semitones;
+                window.osmd.updateGraphic();
+                window.osmd.render();
+            }
         }
-    }
-
-    function changeTranspose(semitones) {
-        currentTranspose += semitones;
-        osmd.Sheet.Transpose = currentTranspose;
-        osmd.updateGraphic();
-        osmd.render();
-    }
-
-    function resetTranspose() {
-        currentTranspose = 0;
-        osmd.Sheet.Transpose = 0;
-        osmd.updateGraphic();
-        osmd.render();
-    }
-
-    // Facciamo partire il tutto all'avvio
-    window.onload = initOSMD;
-</script>
-
+    </script>
 </body>
 </html>
