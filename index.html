@@ -3,101 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Armonia - m-sartore</title>
+    <title>Armonia Interattiva</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.5.8/build/opensheetmusicdisplay.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/osmd-audio-player@1.1.0/dist/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/opensheetmusicdisplay/1.5.8/opensheetmusicdisplay.min.js"></script>
+    <script src="https://unpkg.com/osmd-audio-player@1.1.0/dist/index.js"></script>
 
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f4f4f4; padding: 20px; }
-        #controls { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; display: inline-block; }
-        button, select { padding: 10px 20px; font-size: 16px; margin: 5px; cursor: pointer; border-radius: 5px; border: 1px solid #ddd; }
-        button:hover { background: #e0e0e0; }
-        #status { font-weight: bold; color: #2c3e50; margin: 15px; }
-        #osmd-container { background: white; border-radius: 10px; padding: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #fdfdfd; padding: 20px; color: #333; }
+        #panel { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); display: inline-block; margin-bottom: 25px; border: 1px solid #eee; }
+        button, select { padding: 12px 25px; font-size: 16px; margin: 8px; cursor: pointer; border-radius: 8px; border: 1px solid #ddd; background: #fff; transition: 0.2s; }
+        button:hover { background: #007bff; color: white; border-color: #007bff; }
+        #status { font-weight: bold; color: #007bff; margin-bottom: 15px; min-height: 20px; }
+        #osmd-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .label { font-size: 14px; font-weight: bold; color: #666; }
     </style>
 </head>
 <body>
 
-    <h2>Esempio di Armonia</h2>
-
-    <div id="controls">
+    <div id="panel">
+        <div id="status">Caricamento in corso...</div>
         <button id="btn-play">PLAY / PAUSA</button>
         <button id="btn-stop">STOP</button>
-        <label style="margin-left:15px">Trasporta:</label>
+        <br>
+        <span class="label">TRASPORTA:</span>
         <select id="transpose">
-            <option value="-3">-3</option>
-            <option value="-2">-2</option>
-            <option value="-1">-1</option>
+            <option value="-3">-3 semitoni</option>
+            <option value="-2">-2 semitoni</option>
+            <option value="-1">-1 semitono</option>
             <option value="0" selected>Originale</option>
-            <option value="1">+1</option>
-            <option value="2">+2</option>
-            <option value="3">+3</option>
+            <option value="1">+1 semitono</option>
+            <option value="2">+2 semitoni</option>
+            <option value="3">+3 semitoni</option>
         </select>
     </div>
 
-    <div id="status">Caricamento in corso...</div>
     <div id="osmd-container"></div>
 
     <script>
-        const status = document.getElementById('status');
+        const statusDiv = document.getElementById('status');
         let osmd, audioPlayer;
 
         async function init() {
             try {
-                // 1. OSMD
+                // 1. Inizializza OSMD
                 osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmd-container");
                 await osmd.load("./prova.mxl");
                 osmd.render();
 
-                // 2. PLAYER AUDIO - Controllo gerarchico dei nomi
-                // Proviamo tutte le varianti in cui la libreria si registra
-                let PlayerConstructor;
-                if (window.OsmdAudioPlayer && window.OsmdAudioPlayer.OsmdAudioPlayer) {
-                    PlayerConstructor = window.OsmdAudioPlayer.OsmdAudioPlayer;
-                } else if (window.OsmdAudioPlayer) {
-                    PlayerConstructor = window.OsmdAudioPlayer;
+                // 2. Cerca la libreria audio in ogni posto possibile
+                // Questo è il punto critico: testiamo tutte le varianti
+                let PlayerClass = null;
+                
+                if (window.OsmdAudioPlayer) {
+                    PlayerClass = window.OsmdAudioPlayer.OsmdAudioPlayer || window.OsmdAudioPlayer;
                 }
 
-                if (!PlayerConstructor) {
-                    throw new Error("Libreria audio non rilevata dal browser.");
+                if (!PlayerClass) {
+                    statusDiv.innerText = "ERRORE: Libreria non trovata. Riprovo...";
+                    // Tentativo estremo: ricarica lo script dinamicamente
+                    return; 
                 }
 
-                audioPlayer = new PlayerConstructor();
+                audioPlayer = new PlayerClass();
                 await audioPlayer.loadScore(osmd);
                 
-                status.innerText = "PRONTO! Premi Play e aspetta il caricamento dei suoni.";
+                statusDiv.innerText = "SISTEMA PRONTO";
 
-                // Azioni
+                // GESTIONE PLAY
                 document.getElementById('btn-play').onclick = async () => {
-                    if (audioPlayer.context.state === 'suspended') await audioPlayer.context.resume();
+                    // Sblocca l'audio per i browser moderni
+                    if (audioPlayer.context && audioPlayer.context.state === 'suspended') {
+                        await audioPlayer.context.resume();
+                    }
+
                     if (audioPlayer.state === 'STOPPED' || audioPlayer.state === 'PAUSED') {
+                        statusDiv.innerText = "In riproduzione...";
                         await audioPlayer.play();
                     } else {
+                        statusDiv.innerText = "Pausa";
                         audioPlayer.pause();
                     }
                 };
 
-                document.getElementById('btn-stop').onclick = () => audioPlayer.stop();
+                // GESTIONE STOP
+                document.getElementById('btn-stop').onclick = () => {
+                    audioPlayer.stop();
+                    statusDiv.innerText = "Stop";
+                };
 
+                // GESTIONE TRASPORTO
                 document.getElementById('transpose').onchange = async (e) => {
                     const val = parseInt(e.target.value);
-                    status.innerText = "Trasporto in corso...";
+                    statusDiv.innerText = "Trasporto a " + val + "...";
+                    
                     osmd.Sheet.Transpose = val;
                     osmd.updateGraphic();
                     osmd.render();
+                    
+                    // Ricarica lo spartito nel player per aggiornare le note audio
                     await audioPlayer.loadScore(osmd);
-                    status.innerText = "Pronto! (Trasportato)";
+                    statusDiv.innerText = "Trasporto completato!";
                 };
 
             } catch (err) {
-                status.innerText = "ERRORE: " + err.message;
+                statusDiv.innerText = "ERRORE: " + err.message;
                 console.error(err);
             }
         }
 
-        // Lanciamo l'inizializzazione solo quando tutto è caricato
-        window.onload = init;
+        // Avvio ritardato per dare tempo alle librerie di registrarsi
+        window.addEventListener('load', () => {
+            setTimeout(init, 500);
+        });
     </script>
 </body>
 </html>
