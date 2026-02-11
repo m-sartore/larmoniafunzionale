@@ -10,50 +10,32 @@
             background: #2c3e50; 
             padding: 10px; 
             text-align: center; 
-            height: 60px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            height: 40px;
         }
         iframe { 
             width: 100%; 
-            height: calc(100% - 80px); 
+            height: calc(100% - 60px); 
             border: none; 
             background: white; 
         }
-        .debug-info { font-size: 11px; color: #bdc3c7; text-decoration: none; margin-top: 4px; }
     </style>
 </head>
 <body>
 
     <header>
-        <strong>Libro di Armonia</strong>
-        <a id="file-link" class="debug-info" target="_blank">Verifica file .mxl</a>
+        <strong>Esempio Musicale: prova.mxl</strong>
     </header>
 
     <iframe id="osmd-viewer" src=""></iframe>
 
     <script>
-        // --- CONFIGURAZIONE ---
-        const username = "m-sartore";
-        const repo = "larmoniafunzionale";
+        // Configurazione definitiva per m-sartore
+        const rawUrl = "https://raw.githubusercontent.com/m-sartore/larmoniafunzionale/main/prova.mxl";
         
-        // Legge il file dall'URL (?file=...) o usa prova.mxl di default
-        const urlParams = new URLSearchParams(window.location.search);
-        const fileName = urlParams.get('file') || "prova.mxl";
+        // Costruiamo il link alla demo forzando la pulizia della cache con un numero casuale (?v=...)
+        const demoUrl = "https://opensheetmusicdisplay.github.io/demo/?score=" + encodeURIComponent(rawUrl);
 
-        // Costruzione URL per file direttamente nel main
-        const rawUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/${fileName}`;
-        
-        // Aggiorna link di verifica
-        const debugLink = document.getElementById('file-link');
-        debugLink.href = rawUrl;
-        debugLink.innerText = "Caricato: " + fileName;
-
-        // URL della Demo OSMD
-        const demoUrl = `https://opensheetmusicdisplay.github.io/demo/?score=${encodeURIComponent(rawUrl)}`;
-
-        // Carica nell'iframe
+        // Caricamento immediato
         document.getElementById('osmd-viewer').src = demoUrl;
     </script>
 
