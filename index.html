@@ -8,11 +8,11 @@
     <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.5.8/build/opensheetmusicdisplay.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/osmd-audio-player@1.1.0/dist/index.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #fdfdfd; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background: #fdfdfd; padding: 20px; }
         #controls { background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; display: inline-block; }
-        button, select { padding: 12px 20px; font-size: 15px; margin: 5px; cursor: pointer; border-radius: 8px; border: 1px solid #ddd; background: #f8f9fa; transition: 0.2s; }
-        button:hover { background: #007bff; color: white; }
-        #status { font-weight: bold; color: #007bff; margin: 15px; min-height: 20px; }
+        button, select { padding: 12px 20px; font-size: 15px; margin: 5px; cursor: pointer; border-radius: 8px; border: 1px solid #ddd; background: #f8f9fa; }
+        button:hover { background: #28a745; color: white; }
+        #status { font-weight: bold; color: #28a745; margin: 15px; }
         #osmd-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     </style>
 </head>
@@ -25,59 +25,53 @@
         <button id="btn-stop">STOP</button>
         <label style="margin-left:15px">Trasporta:</label>
         <select id="transpose">
-            <option value="-3">-3 semitoni</option>
-            <option value="-2">-2 semitoni</option>
-            <option value="-1">-1 semitono</option>
-            <option value="0" selected>Originale</option>
-            <option value="1">+1 semitono</option>
-            <option value="2">+2 semitoni</option>
-            <option value="3">+3 semitoni</option>
+            <option value="-3">-3</option><option value="-2">-2</option>
+            <option value="-1">-1</option><option value="0" selected>Originale</option>
+            <option value="1">+1</option><option value="2">+2</option>
+            <option value="3">+3</option>
         </select>
     </div>
 
-    <div id="status">Inizializzazione...</div>
+    <div id="status">Caricamento in corso...</div>
     <div id="osmd-container"></div>
 
     <script>
         const status = document.getElementById('status');
-        let osmd, audioPlayer;
+        let osmd;
+        let audioPlayer;
 
         async function init() {
             try {
-                // 1. Inizializza Visualizzatore
+                // 1. Inizializzazione OSMD
                 osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmd-container");
                 await osmd.load("./prova.mxl");
                 osmd.render();
 
-                // 2. Inizializza Audio Player - TENTATIVO ROBUSTO
-                // Cerchiamo la classe corretta nel caos dei caricamenti browser
-                let PlayerClass;
-                if (typeof OsmdAudioPlayer !== 'undefined') {
-                    PlayerClass = OsmdAudioPlayer.OsmdAudioPlayer || OsmdAudioPlayer;
+                // 2. Inizializzazione Audio - TRUCCO DEFINITIVO
+                // Invece di cercare OsmdAudioPlayer, proviamo a vedere dove lo ha messo il browser
+                console.log("Contenuto window:", window);
+                
+                // La libreria a volte si registra sotto 'OsmdAudioPlayer' ma come oggetto globale
+                const Player = window.OsmdAudioPlayer.OsmdAudioPlayer || window.OsmdAudioPlayer;
+                
+                if (!Player) {
+                    throw new Error("Libreria audio non trovata. Prova a ricaricare la pagina.");
                 }
 
-                if (!PlayerClass || typeof PlayerClass !== 'function') {
-                    throw new Error("Impossibile trovare il costruttore del Player.");
-                }
-
-                audioPlayer = new PlayerClass();
+                audioPlayer = new Player();
                 await audioPlayer.loadScore(osmd);
                 
-                status.innerText = "PRONTO! Clicca Play e attendi il caricamento dei suoni.";
+                status.innerText = "PRONTO! Clicca Play.";
 
-                // --- LOGICA BOTTONI ---
+                // Eventi
                 document.getElementById('btn-play').onclick = async () => {
-                    // Sblocca l'audio per i browser (Chrome/Safari)
-                    if (audioPlayer.context && audioPlayer.context.state === 'suspended') {
-                        await audioPlayer.context.resume();
-                    }
-
+                    if (audioPlayer.context.state === 'suspended') await audioPlayer.context.resume();
                     if (audioPlayer.state === 'STOPPED' || audioPlayer.state === 'PAUSED') {
-                        status.innerText = "Riproduzione in corso...";
                         await audioPlayer.play();
+                        status.innerText = "Suonando...";
                     } else {
-                        status.innerText = "Pausa";
                         audioPlayer.pause();
+                        status.innerText = "Pausa";
                     }
                 };
 
@@ -88,25 +82,20 @@
 
                 document.getElementById('transpose').onchange = async (e) => {
                     const val = parseInt(e.target.value);
-                    status.innerText = "Trasporto a " + val + "...";
-                    
-                    // Applica trasporto grafico
+                    status.innerText = "Trasporto...";
                     osmd.Sheet.Transpose = val;
                     osmd.updateGraphic();
                     osmd.render();
-                    
-                    // Applica trasporto audio
-                    await audioPlayer.loadScore(osmd);
-                    status.innerText = "Trasporto completato. Pronto!";
+                    await audioPlayer.loadScore(osmd); // Aggiorna l'audio alle nuove note
+                    status.innerText = "Trasportato a " + val;
                 };
 
             } catch (err) {
-                status.innerText = "ERRORE TECNICO: " + err.message;
-                console.error("Dettagli errore:", err);
+                status.innerText = "ERRORE: " + err.message;
+                console.error(err);
             }
         }
 
-        // Avvio
         window.onload = init;
     </script>
 </body>
