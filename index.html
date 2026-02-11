@@ -3,78 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esempi di Armonia</title>
+    <title>Esempi di Armonia - Player Interattivo</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.5.8/build/opensheetmusicdisplay.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/osmd-audio-player@1.1.0/dist/index.js"></script>
+
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f4; }
-        #controls { margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        #osmd-container { background: white; border-radius: 8px; padding: 10px; }
-        button, select { padding: 10px; cursor: pointer; border-radius: 5px; border: 1px solid #ccc; margin: 5px; }
-        button:hover { background: #e0e0e0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 20px; background: #ececec; color: #333; }
+        h2 { color: #2c3e50; }
+        #controls { 
+            margin: 20px auto; 
+            max-width: 600px; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        #osmd-container { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 20px; 
+            min-height: 300px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        button, select { 
+            padding: 12px 20px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            border-radius: 8px; 
+            border: 1px solid #ddd; 
+            margin: 5px;
+            background-color: #fff;
+            transition: all 0.3s;
+        }
+        button:hover { background-color: #3498db; color: white; border-color: #3498db; }
+        label { font-weight: bold; margin-left: 10px; }
+        .loading { color: #7f8c8d; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <h2>Esempio di Armonia: Prova</h2>
+    <h2>Esempio di Armonia</h2>
+    <p id="status" class="loading">Caricamento spartito...</p>
 
     <div id="controls">
         <button id="btn-play">Play</button>
         <button id="btn-stop">Stop</button>
         
-        <label for="transpose">Trasporta (semitoni):</label>
+        <label for="transpose">Trasporta:</label>
         <select id="transpose">
-            <option value="-6">-6</option> <option value="-5">-5</option>
-            <option value="-4">-4</option> <option value="-3">-3</option>
-            <option value="-2">-2</option> <option value="-1">-1</option>
-            <option value="0" selected>Originale</option>
-            <option value="1">+1</option> <option value="2">+2</option>
-            <option value="3">+3</option> <option value="4">+4</option>
-            <option value="5">+5</option> <option value="6">+6</option>
+            <option value="-6">-6 semitoni</option>
+            <option value="-5">-5 semitoni</option>
+            <option value="-4">-4 semitoni</option>
+            <option value="-3">-3 semitoni</option>
+            <option value="-2">-2 semitoni</option>
+            <option value="-1">-1 semitono</option>
+            <option value="0" selected>Originale (Do)</option>
+            <option value="1">+1 semitono</option>
+            <option value="2">+2 semitoni</option>
+            <option value="3">+3 semitoni</option>
+            <option value="4">+4 semitoni</option>
+            <option value="5">+5 semitoni</option>
+            <option value="6">+6 semitoni</option>
         </select>
     </div>
 
     <div id="osmd-container"></div>
 
     <script>
-        const osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmd-container");
-        const audioPlayer = new OsmdAudioPlayer();
+        // Variabili globali
+        let osmd;
+        let audioPlayer;
 
-        async function loadScore() {
-            // Sostituisci 'TUO-UTENTE' col tuo vero nome utente GitHub nel link qui sotto
-            const url = "spartiti/prova.mxl";
-            await osmd.load(url);
-            osmd.render();
-            await audioPlayer.loadScore(osmd);
-        }
+        window.onload = async function() {
+            const container = document.getElementById("osmd-container");
+            const statusText = document.getElementById("status");
 
-        // Funzione Play/Pause
-        document.getElementById('btn-play').addEventListener('click', () => {
-            if (audioPlayer.state === 'STOPPED' || audioPlayer.state === 'PAUSED') {
-                audioPlayer.play();
-                document.getElementById('btn-play').innerText = 'Pause';
-            } else {
-                audioPlayer.pause();
-                document.getElementById('btn-play').innerText = 'Play';
+            // 1. Inizializza OSMD
+            osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmd-container", {
+                drawTitle: true,
+                drawSubtitle: true
+            });
+
+            // 2. Inizializza il Player Audio (notare il prefisso OsmdAudioPlayer)
+            try {
+                audioPlayer = new OsmdAudioPlayer.OsmdAudioPlayer();
+            } catch (e) {
+                console.error("Errore inizializzazione player:", e);
+                statusText.innerText = "Errore nel caricamento del player audio.";
+                return;
             }
-        });
 
-        document.getElementById('btn-stop').addEventListener('click', () => {
-            audioPlayer.stop();
-            document.getElementById('btn-play').innerText = 'Play';
-        });
+            // 3. Carica il file
+            try {
+                // Assicurati che il percorso sia esatto: cartella/file
+                await osmd.load("spartiti/prova.mxl");
+                osmd.render();
+                await audioPlayer.loadScore(osmd);
+                statusText.innerText = "Spartito pronto!";
+            } catch (e) {
+                console.error("Errore caricamento file:", e);
+                statusText.innerText = "Errore: file 'spartiti/prova.mxl' non trovato.";
+            }
 
-        // Funzione Trasporto
-        document.getElementById('transpose').addEventListener('change', async (e) => {
-            const semitones = parseInt(e.target.value);
-            osmd.Sheet.Transpose = semitones;
-            osmd.updateGraphic();
-            osmd.render();
-            // Ricarica l'audio per riflettere il trasporto
-            await audioPlayer.loadScore(osmd);
-        });
+            // --- GESTIONE BOTTONI ---
 
-        loadScore();
+            document.getElementById('btn-play').addEventListener('click', async () => {
+                if (audioPlayer.state === 'STOPPED' || audioPlayer.state === 'PAUSED') {
+                    await audioPlayer.play();
+                    document.getElementById('btn-play').innerText = 'Pausa';
+                } else {
+                    audioPlayer.pause();
+                    document.getElementById('btn-play').innerText = 'Play';
+                }
+            });
+
+            document.getElementById('btn-stop').addEventListener('click', () => {
+                audioPlayer.stop();
+                document.getElementById('btn-play').innerText = 'Play';
+            });
+
+            // --- GESTIONE TRASPORTO ---
+            document.getElementById('transpose').addEventListener('change', async (e) => {
+                const semitones = parseInt(e.target.value);
+                statusText.innerText = "Trasporto in corso...";
+                
+                // Applica trasporto
+                osmd.Sheet.Transpose = semitones;
+                osmd.updateGraphic();
+                osmd.render();
+                
+                // Ricarica l'audio per riflettere le nuove note
+                await audioPlayer.loadScore(osmd);
+                statusText.innerText = "Trasporto completato!";
+            });
+        };
     </script>
 </body>
 </html>
