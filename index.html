@@ -4,100 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Esempi di Armonia</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.5.8/build/opensheetmusicdisplay.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/osmd-audio-player@1.1.0/dist/index.js"></script>
-
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f9f9f9; }
-        #controls { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: inline-block; margin-bottom: 20px; }
-        #osmd-container { background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        button, select { padding: 10px 15px; margin: 5px; cursor: pointer; border: 1px solid #ddd; border-radius: 5px; }
-        button:hover { background: #eee; }
-        .status { color: #666; font-size: 0.9em; margin-bottom: 10px; }
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: sans-serif; }
+        header { background: #2c3e50; color: white; padding: 10px; text-align: center; height: 50px; }
+        iframe { width: 100%; height: calc(100% - 70px); border: none; }
+        .info { font-size: 0.8em; opacity: 0.8; }
     </style>
 </head>
 <body>
 
-    <h2>Esempio di Armonia</h2>
-    <div id="status-msg" class="status">Inizializzazione in corso...</div>
+    <header>
+        <strong>Libro di Armonia - Esempio: prova.mxl</strong>
+        <div class="info">Usa i controlli in basso nel player per Play e Trasporto</div>
+    </header>
 
-    <div id="controls">
-        <button id="btn-play">Play</button>
-        <button id="btn-stop">Stop</button>
-        <label>Trasporta:</label>
-        <select id="transpose">
-            <option value="-5">-5</option><option value="-4">-4</option>
-            <option value="-3">-3</option><option value="-2">-2</option>
-            <option value="-1">-1</option><option value="0" selected>Originale</option>
-            <option value="1">+1</option><option value="2">+2</option>
-            <option value="3">+3</option><option value="4">+4</option>
-            <option value="5">+5</option>
-        </select>
-    </div>
-
-    <div id="osmd-container"></div>
+    <iframe id="player" src=""></iframe>
 
     <script>
-        let osmd;
-        let audioPlayer;
-
-        async function init() {
-            const status = document.getElementById('status-msg');
-            
-            try {
-                // 1. Inizializza Visualizzatore
-                osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmd-container");
-                
-                // 2. Prova a inizializzare il Player (Metodo alternativo)
-                // Usiamo il riferimento globale corretto
-                if (typeof OsmdAudioPlayer !== 'undefined') {
-                    audioPlayer = new OsmdAudioPlayer.OsmdAudioPlayer();
-                } else {
-                    throw new Error("Libreria Audio non trovata");
-                }
-
-                // 3. Carica il file
-                status.innerText = "Caricamento file...";
-                await osmd.load("spartiti/prova.mxl");
-                osmd.render();
-                
-                status.innerText = "Configurazione audio...";
-                await audioPlayer.loadScore(osmd);
-                
-                status.innerText = "Pronto!";
-            } catch (e) {
-                console.error(e);
-                status.innerText = "Errore: " + e.message;
-            }
-
-            // Controlli
-            document.getElementById('btn-play').onclick = async () => {
-                if (audioPlayer.state === 'STOPPED' || audioPlayer.state === 'PAUSED') {
-                    await audioPlayer.play();
-                    document.getElementById('btn-play').innerText = 'Pause';
-                } else {
-                    audioPlayer.pause();
-                    document.getElementById('btn-play').innerText = 'Play';
-                }
-            };
-
-            document.getElementById('btn-stop').onclick = () => {
-                audioPlayer.stop();
-                document.getElementById('btn-play').innerText = 'Play';
-            };
-
-            document.getElementById('transpose').onchange = async (e) => {
-                status.innerText = "Trasporto...";
-                osmd.Sheet.Transpose = parseInt(e.target.value);
-                osmd.updateGraphic();
-                osmd.render();
-                await audioPlayer.loadScore(osmd);
-                status.innerText = "Trasporto completato!";
-            };
-        }
-
-        init();
+        // Costruiamo il link al tuo file mxl su GitHub
+        // Sostituisci 'TUO-UTENTE' con il tuo nome reale su GitHub
+        const utente = "m-sartore"; 
+        const repo = "larmoniafunzionale"; // o il nome del tuo repo
+        const file = "spartiti/prova.mxl";
+        
+        const rawUrl = `https://raw.githubusercontent.com/${utente}/${repo}/main/${file}`;
+        
+        // Usiamo un visualizzatore basato su OSMD che permette il trasporto
+        const viewerUrl = `https://opensheetmusicdisplay.github.io/demo/?score=${encodeURIComponent(rawUrl)}`;
+        
+        document.getElementById('player').src = viewerUrl;
     </script>
+
 </body>
 </html>
