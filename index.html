@@ -3,39 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esempi di Armonia</title>
+    <title>Esempi di Armonia - m-sartore</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #2c3e50; }
-        header { color: white; padding: 10px; text-align: center; }
-        iframe { width: 100%; height: calc(100% - 60px); border: none; background: white; }
-        .debug-link { color: #f1c40f; font-size: 12px; text-decoration: none; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #1a1a1a; color: white; overflow: hidden; }
+        header { 
+            background: #2c3e50; 
+            padding: 10px; 
+            text-align: center; 
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        iframe { 
+            width: 100%; 
+            height: calc(100% - 80px); 
+            border: none; 
+            background: white; 
+        }
+        .debug-info { font-size: 11px; color: #bdc3c7; text-decoration: none; margin-top: 4px; }
     </style>
 </head>
 <body>
 
     <header>
-        <strong>Esempio Musicale</strong><br>
-        <a id="debug" class="debug-link" target="_blank">Verifica se il file esiste (clicca qui)</a>
+        <strong>Libro di Armonia</strong>
+        <a id="file-link" class="debug-info" target="_blank">Verifica file .mxl</a>
     </header>
 
-    <iframe id="osmd-player" src=""></iframe>
+    <iframe id="osmd-viewer" src=""></iframe>
 
     <script>
-        // --- MODIFICA SOLO QUI ---
-        const UTENTE = "m-sartore"; 
-        const REPO = "larmoniafunzionale";
-        // -------------------------
-
-        const file = "Spartiti/prova.mxl";
-        const rawUrl = `https://raw.githubusercontent.com/${UTENTE}/${REPO}/main/spartiti/${file}`;
+        // --- CONFIGURAZIONE ---
+        const username = "m-sartore";
+        const repo = "larmoniafunzionale";
         
-        // Aggiorna il link di debug per noi
-        document.getElementById('debug').href = rawUrl;
-        document.getElementById('debug').innerText = "Link generato: " + rawUrl;
+        // Legge il file dall'URL (?file=...) o usa prova.mxl di default
+        const urlParams = new URLSearchParams(window.location.search);
+        const fileName = urlParams.get('file') || "prova.mxl";
 
-        // Carica la demo ufficiale con il tuo file
-        const demoBase = "https://opensheetmusicdisplay.github.io/demo/?score=";
-        document.getElementById('osmd-player').src = demoBase + encodeURIComponent(rawUrl);
+        // Costruzione URL per file direttamente nel main
+        const rawUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/${fileName}`;
+        
+        // Aggiorna link di verifica
+        const debugLink = document.getElementById('file-link');
+        debugLink.href = rawUrl;
+        debugLink.innerText = "Caricato: " + fileName;
+
+        // URL della Demo OSMD
+        const demoUrl = `https://opensheetmusicdisplay.github.io/demo/?score=${encodeURIComponent(rawUrl)}`;
+
+        // Carica nell'iframe
+        document.getElementById('osmd-viewer').src = demoUrl;
     </script>
 
 </body>
