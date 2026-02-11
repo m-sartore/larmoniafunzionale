@@ -4,16 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Armonia - m-sartore</title>
-    
     <script src="https://unpkg.com/opensheetmusicdisplay@1.5.8/build/opensheetmusicdisplay.min.js"></script>
     <script src="https://unpkg.com/osmd-audio-player@1.1.0/dist/index.js"></script>
-
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f0f0f0; padding: 10px; }
-        #controls { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        #osmd-container { background: white; min-height: 400px; border-radius: 8px; }
-        button { padding: 10px 20px; font-weight: bold; cursor: pointer; }
-        .status-bar { font-size: 12px; color: #666; margin: 10px; }
+        body { font-family: sans-serif; text-align: center; background: #f0f0f0; padding: 20px; }
+        #controls { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        button, select { padding: 12px 20px; font-size: 16px; margin: 5px; cursor: pointer; border-radius: 8px; border: 1px solid #ddd; background: #fff; }
+        button:hover { background: #3498db; color: white; }
+        #status { font-size: 14px; color: #666; margin: 10px; font-weight: bold; }
+        #osmd-container { background: white; border-radius: 12px; padding: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -21,70 +20,85 @@
     <div id="controls">
         <button id="btn-play">PLAY / PAUSA</button>
         <button id="btn-stop">STOP</button>
+        <br>
+        <label>Trasporta Semitoni: </label>
         <select id="transpose">
-            <option value="0">Tonalità Originale</option>
-            <option value="1">+1 Semitono</option>
-            <option value="2">+2 Semitoni</option>
-            <option value="-1">-1 Semitono</option>
-            <option value="-2">-2 Semitoni</option>
+            <option value="-5">-5</option><option value="-4">-4</option>
+            <option value="-3">-3</option><option value="-2">-2</option>
+            <option value="-1">-1</option><option value="0" selected>0 (Originale)</option>
+            <option value="1">+1</option><option value="2">+2</option>
+            <option value="3">+3</option><option value="4">+4</option>
+            <option value="5">+5</option>
         </select>
     </div>
 
-    <div id="status" class="status-bar">Avvio sistema...</div>
+    <div id="status">Inizializzazione...</div>
     <div id="osmd-container"></div>
 
     <script>
         const status = document.getElementById('status');
-        let osmd;
-        let audioPlayer;
+        let osmd, audioPlayer;
 
-        // Funzione di avvio forzato
-        async function loadAll() {
+        async function init() {
             try {
-                status.innerText = "Configurazione Visualizzatore...";
+                // 1. Visualizzatore
                 osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmd-container");
-
-                status.innerText = "Caricamento file prova.mxl...";
                 await osmd.load("./prova.mxl");
                 osmd.render();
 
-                status.innerText = "Inizializzazione Audio (attendere)...";
-                // Proviamo entrambi i modi in cui la libreria può presentarsi
+                // 2. Audio Player (Gestione errore libreria)
                 const PlayerClass = window.OsmdAudioPlayer?.OsmdAudioPlayer || window.OsmdAudioPlayer;
+                if (!PlayerClass) throw new Error("Libreria Audio non caricata");
+                
                 audioPlayer = new PlayerClass();
                 
+                // Carichiamo lo spartito nel player
                 await audioPlayer.loadScore(osmd);
-                
-                status.innerText = "TUTTO PRONTO!";
-                
-                // Gestione Bottoni
+                status.innerText = "PRONTO! Clicca Play (attendi qualche secondo per l'audio)";
+
+                // PLAY / PAUSA
                 document.getElementById('btn-play').onclick = async () => {
+                    // Importante: riprende il contesto audio (richiesto dai browser)
+                    if (audioPlayer.context.state === 'suspended') {
+                        await audioPlayer.context.resume();
+                    }
+
                     if (audioPlayer.state === 'STOPPED' || audioPlayer.state === 'PAUSED') {
+                        status.innerText = "In riproduzione...";
                         await audioPlayer.play();
                     } else {
+                        status.innerText = "Pausa";
                         audioPlayer.pause();
                     }
                 };
 
-                document.getElementById('btn-stop').onclick = () => audioPlayer.stop();
+                // STOP
+                document.getElementById('btn-stop').onclick = () => {
+                    audioPlayer.stop();
+                    status.innerText = "Stop";
+                };
 
+                // TRASPORTO (Rifatto per essere più solido)
                 document.getElementById('transpose').onchange = async (e) => {
-                    status.innerText = "Trasporto in corso...";
-                    osmd.Sheet.Transpose = parseInt(e.target.value);
+                    const val = parseInt(e.target.value);
+                    status.innerText = "Trasporto a " + val + "...";
+                    
+                    // Applichiamo il trasporto a OSMD
+                    osmd.Sheet.Transpose = val;
                     osmd.updateGraphic();
                     osmd.render();
+                    
+                    // Sincronizziamo il player audio con le nuove note trasportate
                     await audioPlayer.loadScore(osmd);
-                    status.innerText = "Pronto (Trasportato)";
+                    status.innerText = "Trasportato a " + val + ". Pronto!";
                 };
 
             } catch (err) {
                 status.innerText = "ERRORE: " + err.message;
-                console.error(err);
             }
         }
 
-        // Aspetta 1 secondo per sicurezza e poi lancia tutto
-        setTimeout(loadAll, 1000);
+        window.onload = init;
     </script>
 </body>
 </html>
