@@ -3,109 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Armonia Interattiva - m-sartore</title>
-    <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.5.8/build/opensheetmusicdisplay.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/osmd-audio-player@1.1.0/dist/index.js"></script>
+    <title>Armonia - m-sartore</title>
+    
+    <script src="https://unpkg.com/opensheetmusicdisplay@1.5.8/build/opensheetmusicdisplay.min.js"></script>
+    <script src="https://unpkg.com/osmd-audio-player@1.1.0/dist/index.js"></script>
+
     <style>
-        body { font-family: sans-serif; text-align: center; margin: 0; background: #f4f4f4; padding: 20px; }
-        #controls { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; margin-bottom: 20px; }
-        button, select { padding: 12px; margin: 5px; cursor: pointer; border-radius: 5px; border: 1px solid #ddd; font-size: 16px; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        #status { color: #555; font-style: italic; margin: 10px; }
-        #osmd-container { background: white; border-radius: 10px; padding: 10px; min-height: 400px; }
+        body { font-family: sans-serif; text-align: center; background: #f0f0f0; padding: 10px; }
+        #controls { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #osmd-container { background: white; min-height: 400px; border-radius: 8px; }
+        button { padding: 10px 20px; font-weight: bold; cursor: pointer; }
+        .status-bar { font-size: 12px; color: #666; margin: 10px; }
     </style>
 </head>
 <body>
 
-    <h2>Esempio di Armonia</h2>
-
     <div id="controls">
-        <button id="btn-play" disabled>Caricamento...</button>
-        <button id="btn-stop" disabled>Stop</button>
-        <label>Trasporta:</label>
+        <button id="btn-play">PLAY / PAUSA</button>
+        <button id="btn-stop">STOP</button>
         <select id="transpose">
-            <option value="-5">-5 semitoni</option>
-            <option value="-4">-4 semitoni</option>
-            <option value="-3">-3 semitoni</option>
-            <option value="-2">-2 semitoni</option>
-            <option value="-1">-1 semitono</option>
-            <option value="0" selected>Originale</option>
-            <option value="1">+1 semitono</option>
-            <option value="2">+2 semitoni</option>
-            <option value="3">+3 semitoni</option>
-            <option value="4">+4 semitoni</option>
-            <option value="5">+5 semitoni</option>
+            <option value="0">Tonalità Originale</option>
+            <option value="1">+1 Semitono</option>
+            <option value="2">+2 Semitoni</option>
+            <option value="-1">-1 Semitono</option>
+            <option value="-2">-2 Semitoni</option>
         </select>
     </div>
 
-    <p id="status">Verifica librerie in corso...</p>
+    <div id="status" class="status-bar">Avvio sistema...</div>
     <div id="osmd-container"></div>
 
     <script>
-        let osmd, audioPlayer;
         const status = document.getElementById('status');
-        const playBtn = document.getElementById('btn-play');
-        const stopBtn = document.getElementById('btn-stop');
+        let osmd;
+        let audioPlayer;
 
-        // Funzione per attendere che le librerie siano caricate
-        function checkLibraries() {
-            if (typeof opensheetmusicdisplay !== 'undefined' && typeof OsmdAudioPlayer !== 'undefined') {
-                status.innerText = "Librerie pronte. Caricamento file...";
-                initPlayer();
-            } else {
-                status.innerText = "Inizializzazione librerie...";
-                setTimeout(checkLibraries, 500); // Riprova ogni mezzo secondo
-            }
-        }
-
-        async function initPlayer() {
+        // Funzione di avvio forzato
+        async function loadAll() {
             try {
+                status.innerText = "Configurazione Visualizzatore...";
                 osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmd-container");
-                audioPlayer = new OsmdAudioPlayer.OsmdAudioPlayer();
 
-                // Carichiamo il file locale
+                status.innerText = "Caricamento file prova.mxl...";
                 await osmd.load("./prova.mxl");
                 osmd.render();
+
+                status.innerText = "Inizializzazione Audio (attendere)...";
+                // Proviamo entrambi i modi in cui la libreria può presentarsi
+                const PlayerClass = window.OsmdAudioPlayer?.OsmdAudioPlayer || window.OsmdAudioPlayer;
+                audioPlayer = new PlayerClass();
                 
                 await audioPlayer.loadScore(osmd);
                 
-                status.innerText = "Pronto! Premi Play.";
-                playBtn.disabled = false;
-                stopBtn.disabled = false;
-                playBtn.innerText = "Play";
-            } catch (e) {
-                status.innerText = "Errore: " + e.message;
-                console.error(e);
+                status.innerText = "TUTTO PRONTO!";
+                
+                // Gestione Bottoni
+                document.getElementById('btn-play').onclick = async () => {
+                    if (audioPlayer.state === 'STOPPED' || audioPlayer.state === 'PAUSED') {
+                        await audioPlayer.play();
+                    } else {
+                        audioPlayer.pause();
+                    }
+                };
+
+                document.getElementById('btn-stop').onclick = () => audioPlayer.stop();
+
+                document.getElementById('transpose').onchange = async (e) => {
+                    status.innerText = "Trasporto in corso...";
+                    osmd.Sheet.Transpose = parseInt(e.target.value);
+                    osmd.updateGraphic();
+                    osmd.render();
+                    await audioPlayer.loadScore(osmd);
+                    status.innerText = "Pronto (Trasportato)";
+                };
+
+            } catch (err) {
+                status.innerText = "ERRORE: " + err.message;
+                console.error(err);
             }
         }
 
-        playBtn.onclick = async () => {
-            if (audioPlayer.state === 'STOPPED' || audioPlayer.state === 'PAUSED') {
-                await audioPlayer.play();
-                playBtn.innerText = "Pausa";
-            } else {
-                audioPlayer.pause();
-                playBtn.innerText = "Play";
-            }
-        };
-
-        stopBtn.onclick = () => {
-            audioPlayer.stop();
-            playBtn.innerText = "Play";
-        };
-
-        document.getElementById('transpose').onchange = async (e) => {
-            const val = parseInt(e.target.value);
-            status.innerText = "Trasporto a " + val + "...";
-            osmd.Sheet.Transpose = val;
-            osmd.updateGraphic();
-            osmd.render();
-            await audioPlayer.loadScore(osmd);
-            status.innerText = "Trasporto completato!";
-        };
-
-        // Avvia il controllo
-        checkLibraries();
+        // Aspetta 1 secondo per sicurezza e poi lancia tutto
+        setTimeout(loadAll, 1000);
     </script>
 </body>
 </html>
