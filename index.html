@@ -3,41 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esempi di Armonia - m-sartore</title>
+    <title>Esempi di Armonia</title>
+    <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.5.8/build/opensheetmusicdisplay.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/osmd-audio-player@1.1.0/dist/index.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; background: #1a1a1a; color: white; overflow: hidden; }
-        header { 
-            background: #2c3e50; 
-            padding: 10px; 
-            text-align: center; 
-            height: 40px;
-        }
-        iframe { 
-            width: 100%; 
-            height: calc(100% - 60px); 
-            border: none; 
-            background: white; 
-        }
+        body { font-family: sans-serif; text-align: center; margin: 0; background: #f4f4f4; }
+        header { background: #2c3e50; color: white; padding: 15px; }
+        #controls { padding: 15px; background: white; border-bottom: 1px solid #ccc; }
+        #osmd-container { width: 100%; background: white; margin-top: 10px; }
+        button, select { padding: 10px; margin: 5px; cursor: pointer; border-radius: 5px; border: 1px solid #ddd; }
+        .caricamento { color: #666; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <header>
-        <strong>Esempio Musicale: prova.mxl</strong>
-    </header>
+<header><strong>Libro di Armonia - m-sartore</strong></header>
 
-    <iframe id="osmd-viewer" src=""></iframe>
+<div id="controls">
+    <button id="btn-play">Caricamento...</button>
+    <button id="btn-stop">Stop</button>
+    <label>Trasporta:</label>
+    <select id="transpose">
+        <option value="-5">-5</option><option value="-4">-4</option>
+        <option value="-3">-3</option><option value="-2">-2</option>
+        <option value="-1">-1</option><option value="0" selected>Originale</option>
+        <option value="1">+1</option><option value="2">+2</option>
+        <option value="3">+3</option><option value="4">+4</option>
+        <option value="5">+5</option>
+    </select>
+</div>
 
-    <script>
-        // Configurazione definitiva per m-sartore
-        const rawUrl = "https://raw.githubusercontent.com/m-sartore/larmoniafunzionale/main/prova.mxl";
-        
-        // Costruiamo il link alla demo forzando la pulizia della cache con un numero casuale (?v=...)
-        const demoUrl = "https://opensheetmusicdisplay.github.io/demo/?score=" + encodeURIComponent(rawUrl);
+<div id="status" class="caricamento">Inizializzazione...</div>
+<div id="osmd-container"></div>
 
-        // Caricamento immediato
-        document.getElementById('osmd-viewer').src = demoUrl;
-    </script>
+<script>
+    let osmd, audioPlayer;
 
+    async function start() {
+        const status = document.getElementById('status');
+        const playBtn = document.getElementById('btn-play');
+
+        try {
+            // 1. Inizializza visualizzatore
+            osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmd-container");
+            
+            // 2. Inizializza audio (usando il nome corretto della libreria)
+            audioPlayer = new OsmdAudioPlayer.OsmdAudioPlayer();
+
+            // 3. Carica il TUO file locale (essendo nello stesso posto, basta il nome!)
+            status.innerText = "Caricamento prova.mxl...";
+            await osmd.load("./prova.mxl");
+            osmd.render();
+            
+            // 4. Collega l'audio
+            await audioPlayer.loadScore(osmd);
+            
+            status.innerText = "Spartito pronto!";
+            playBtn.innerText = "Play";
+        } catch (e) {
+            console.error(e);
+            status.innerText = "Errore: " + e.message;
+        }
+
+        // --- AZIONI ---
+        playBtn.onclick = async () => {
+            if (audioPlayer.state === 'STOPPED' || audioPlayer.state === 'PAUSED') {
+                await audioPlayer.play();
+                playBtn.innerText = "Pausa";
+            } else {
+                audioPlayer.pause();
+                playBtn.innerText = "Play";
+            }
+        };
+
+        document.getElementById('btn-stop').onclick = () => {
+            audioPlayer.stop();
+            playBtn.innerText = "Play";
+        };
+
+        document.getElementById('transpose').onchange = async (e) => {
+            status.innerText = "Trasporto in corso...";
+            osmd.Sheet.Transpose = parseInt(e.target.value);
+            osmd.updateGraphic();
+            osmd.render();
+            await audioPlayer.loadScore(osmd);
+            status.innerText = "Trasporto completato!";
+        };
+    }
+
+    start();
+</script>
 </body>
 </html>
