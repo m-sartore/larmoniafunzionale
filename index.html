@@ -6,33 +6,40 @@
     <title>Esempi di Armonia</title>
     <style>
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: sans-serif; }
-        header { background: #2c3e50; color: white; padding: 10px; text-align: center; height: 50px; }
-        iframe { width: 100%; height: calc(100% - 70px); border: none; }
-        .info { font-size: 0.8em; opacity: 0.8; }
+        header { 
+            background: #2c3e50; color: white; padding: 10px; text-align: center; 
+            height: 60px; display: flex; align-items: center; justify-content: center;
+        }
+        iframe { width: 100%; height: calc(100% - 80px); border: none; }
+        .istruzioni { font-size: 0.8em; background: #f1c40f; color: #000; padding: 2px 10px; border-radius: 5px; margin-left: 15px; }
     </style>
 </head>
 <body>
 
     <header>
-        <strong>Libro di Armonia - Esempio: prova.mxl</strong>
-        <div class="info">Usa i controlli in basso nel player per Play e Trasporto</div>
+        <strong>Esempio Musicale</strong>
+        <span class="istruzioni">Usa il menù a sinistra nel player per PLAY e TRASPORTO</span>
     </header>
 
-    <iframe id="player" src=""></iframe>
+    <iframe id="osmd-player" src=""></iframe>
 
     <script>
-        // Costruiamo il link al tuo file mxl su GitHub
-        // Sostituisci 'TUO-UTENTE' con il tuo nome reale su GitHub
-        const utente = "m-sartore"; 
-        const repo = "larmoniafunzionale"; // o il nome del tuo repo
-        const file = "spartiti/prova.mxl";
-        
-        const rawUrl = `https://raw.githubusercontent.com/${utente}/${repo}/main/${file}`;
-        
-        // Usiamo un visualizzatore basato su OSMD che permette il trasporto
-        const viewerUrl = `https://opensheetmusicdisplay.github.io/demo/?score=${encodeURIComponent(rawUrl)}`;
-        
-        document.getElementById('player').src = viewerUrl;
+        // --- CONFIGURAZIONE: CAMBIA SOLO QUESTE DUE VOCI ---
+        const UTENTE_GITHUB = "m-sartore"; // Scrivi qui il tuo nome utente GitHub
+        const NOME_REPO = "larmoniafunzionale";    // Il nome del tuo repository
+        // --------------------------------------------------
+
+        // Recuperiamo il nome del file dal link (così puoi usare un solo index.html per tutti i file!)
+        const urlParams = new URLSearchParams(window.location.search);
+        let fileMxl = urlParams.get('file') || "prova.mxl"; // Se non specifichi nulla, carica prova.mxl
+
+        // Costruiamo l'indirizzo del file "grezzo" su GitHub
+        const rawFileUrl = `https://raw.githubusercontent.com/${UTENTE_GITHUB}/${NOME_REPO}/main/spartiti/${fileMxl}`;
+
+        // Puntiamo l'iframe alla demo ufficiale di OSMD passando il tuo file come parametro
+        const demoUrl = `https://opensheetmusicdisplay.github.io/demo/?score=${encodeURIComponent(rawFileUrl)}`;
+
+        document.getElementById('osmd-player').src = demoUrl;
     </script>
 
 </body>
